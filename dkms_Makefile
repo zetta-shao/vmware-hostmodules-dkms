@@ -1,0 +1,87 @@
+
+MODULES = vmmon vmnet
+SUBDIRS = $(MODULES:%=%-only)
+TARBALLS = $(MODULES:%=%.tar)
+MODFILES = $(foreach mod,$(MODULES),$(mod)-only/$(mod).ko)
+VM_UNAME = $(shell uname -r)
+MODDIR = /lib/modules/$(VM_UNAME)/misc
+MOD_SUBDIR = extra/drivers/net
+MODINFO = /sbin/modinfo
+DEPMOD = /sbin/depmod
+
+DEST_MODULE_LOCATION = "/extra/driver/net/"
+
+ifneq (,$(wildcard .git/*))
+	PACKAGE_VERSION := $(shell git describe --long --always)
+else
+	ifneq ("", "$(wildcard VERSION)")
+		PACKAGE_VERSION := $(shell cat VERSION)
+	else
+		PACKAGE_VERSION := unknown
+	endif
+endif
+
+%.tar: FORCE gitcleancheck
+	git archive -o $@ --format=tar HEAD $(@:.tar=-only)
+
+.PHONY: FORCE subdirs $(SUBDIRS) clean tarballs dkms dkms_clean dkms_configure
+
+subdirs: retiredcheck $(SUBDIRS)
+
+FORCE:
+
+$(SUBDIRS):
+	$(MAKE) -C $@ $(MAKECMDGOALS) KVER=${kernelver} --file=dkms_Makefile
+
+gitcheck:
+	@git status >/dev/null 2>&1 \
+	     || ( echo "This only works in a git repository."; exit 1 )
+
+gitcleancheck: gitcheck
+	@git diff --exit-code HEAD >/dev/null 2>&1 \
+	     || echo "Warning: tarballs will reflect current HEAD (no uncommited changes)"
+
+retiredcheck:
+	@test -f RETIRED && cat RETIRED || true
+
+install: retiredcheck $(MODFILES)
+	@for f in $(MODFILES); do \
+	    mver=$$($(MODINFO) -F vermagic $$f);\
+	    mver=$${mver%% *};\
+	    test "$${mver}" = "$(VM_UNAME)" \
+	        || ( echo "Version mismatch: module $$f $${mver}, kernel $(VM_UNAME)" ; exit 1 );\
+	done
+	install -D -t $(DESTDIR)$(MODDIR) $(MODFILES)
+	strip --strip-debug $(MODULES:%=$(DESTDIR)$(MODDIR)/%.ko)
+	if test -z "$(DESTDIR)"; then $(DEPMOD) -a $(VM_UNAME); fi
+
+clean: $(SUBDIRS)
+	rm -f *.ko *.o
+
+tarballs: $(TARBALLS)
+
+# DKMS
+DRIVER_NAME = vmware-host-modules
+PACKAGE_NAME = $(DRIVER_NAME)
+
+dkms_configure:
+	@echo "PACKAGE_NAME="$(PACKAGE_NAME) > dkms.conf
+	@echo "PACKAGE_VERSION="$(PACKAGE_VERSION) >> dkms.conf
+	@echo 'MAKE="make --file=dkms_Makefile KVER=$${kernelver} DKMS_BUILD=1"' >> dkms.conf
+	@echo "BUILT_MODULE_NAME[0]=vmmon" >> dkms.conf
+	@echo "BUILT_MODULE_NAME[1]=vmnet" >> dkms.conf
+	@echo "DEST_MODULE_LOCATION[0]=/updates" >> dkms.conf
+	@echo "DEST_MODULE_LOCATION[1]=/updates" >> dkms.conf
+	@echo "AUTOINSTALL=\"yes\"" >> dkms.conf
+	@echo "$(PACKAGE_VERSION)" >VERSION
+dkms: dkms_configure
+	@dkms add $(CURDIR)
+	@dkms build -m $(DRIVER_NAME) -v $(PACKAGE_VERSION)
+	@dkms install --force -m $(DRIVER_NAME) -v $(PACKAGE_VERSION)
+	@modprobe $(MODULES)
+
+dkms_clean:
+	-@rmmod $(MODULES);
+	-@dkms remove -m $(PACKAGE_NAME) -v $(PACKAGE_VERSION)
+	-@rm dkms.conf VERSION
+
