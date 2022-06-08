@@ -6,6 +6,8 @@ if [ "${1}" = "clean" ]; then
 rm -rf /usr/src/vmware-host-modules-*
 rm -rf /var/lib/dkms/vmware-host-modules
 rm -rf ${TGTD}
+rmmod vmnet
+rmmod vmmon
 rm -f /lib/modules/*/updates/dkms/vmmon.ko /lib/modules/*/updates/dkms/vmnet.ko
 depmod -a
 exit
