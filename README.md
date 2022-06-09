@@ -2,9 +2,9 @@
 This is vmware-host-modules DKMS support package for VMware workstation/player linux version, when install in ubuntu, this DKMS package will auto-build and install "vmware-host-modules" kernel modules when newer kernel version upgraded.
 
 ## Before install
-Before install vmware-host-modules, check vmware player or workstation installed production name and version **in GUI console**, example:
+Before install vmware-host-modules, check vmware player or workstation installed production name and version **in GUI concole**, example:
 
-`vmware-installer`
+`vmware-installer -l`
 > Product Name         Product Version<br>
 > ==================== ====================<br>
 > **vmware-workstation   12.5.5**.999999<br>
