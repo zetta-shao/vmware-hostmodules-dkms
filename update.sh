@@ -5,4 +5,5 @@ echo ${TGTM}
 dkms remove ${TGTM}
 dkms uninstall ${TGTM}
 fi
+cd vmware-host-modules
 make dkms --file=dkms_Makefile
