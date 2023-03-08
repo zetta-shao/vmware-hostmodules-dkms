@@ -11,7 +11,7 @@ if [ "${1}" = "clean" ]; then
     dkms remove ${TGTM}
     modprobe -r vmnet vmmon
     rm -rf /usr/src/${TGTS}
-    depmod -a; exit; fi; fi
+    depmod -a; exit; fi; exit; fi
 echo "branch is: "${BRANCH}
 if ! [ -d "${TGTD}" ]; then
 git clone https://github.com/mkubecek/vmware-host-modules.git -b ${BRANCH} ${TGTD}
