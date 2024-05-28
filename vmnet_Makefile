@@ -95,7 +95,7 @@ DRIVER_KO := $(DRIVER).ko
 .PHONY: $(DRIVER_KO)
 
 auto-build: $(DRIVER_KO)
-	cp -f $< $(SRCROOT)/../$(DRIVER).o
+	strip --strip-debug $<
 	cp -f $< $(SRCROOT)/../
 
 # $(DRIVER_KO) is a phony target, so compare file times explicitly

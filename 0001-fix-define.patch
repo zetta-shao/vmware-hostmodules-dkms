@@ -1,0 +1,25 @@
+From 4909572e806fc0850de40eb1d3a83923d711d69c Mon Sep 17 00:00:00 2001
+From: zetta shao <zphalanx@gmail.com>
+Date: Tue, 28 May 2024 12:09:41 +0800
+Subject: [PATCH] fix define
+
+---
+ vmmon-only/include/x86msr.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/vmmon-only/include/x86msr.h b/vmmon-only/include/x86msr.h
+index f67a0e1..74eaae0 100644
+--- a/vmmon-only/include/x86msr.h
++++ b/vmmon-only/include/x86msr.h
+@@ -67,7 +67,7 @@ typedef struct MSRReply {
+ typedef struct MSRQuery {
+    uint32 msrNum;           // IN
+    uint32 numLogicalCPUs;   // IN/OUT
+-   MSRReply logicalCPUs[0]; // OUT
++   MSRReply logicalCPUs[]; // OUT
+ } MSRQuery;
+ #pragma pack(pop)
+ 
+-- 
+2.43.0
+

@@ -52,7 +52,7 @@ install: retiredcheck $(MODFILES)
 	        || ( echo "Version mismatch: module $$f $${mver}, kernel $(VM_UNAME)" ; exit 1 );\
 	done
 	install -D -t $(DESTDIR)$(MODDIR) $(MODFILES)
-	strip --strip-debug $(MODULES:%=$(DESTDIR)$(MODDIR)/%.ko)
+	#strip --strip-debug $(MODULES:%=$(DESTDIR)$(MODDIR)/%.ko)
 	if test -z "$(DESTDIR)"; then $(DEPMOD) -a $(VM_UNAME); fi
 
 clean: $(SUBDIRS)
