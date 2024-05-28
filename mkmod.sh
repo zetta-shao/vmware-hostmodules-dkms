@@ -16,11 +16,11 @@ if [ "${1}" = "clean" ]; then
 echo "branch is: "${BRANCH}
 if ! [ -d "${TGTD}" ]; then
 git clone https://github.com/mkubecek/vmware-host-modules.git -b ${BRANCH} ${TGTD}
-fi
 cp -f dkms_Makefile ${TGTD}/
 cp -f vmmon_Makefile ${TGTD}/vmmon-only/dkms_Makefile
 cp -f vmnet_Makefile ${TGTD}/vmnet-only/dkms_Makefile
 cd ${TGTD}
 git apply ../0001-fix-define.patch
 cd ..
+fi
 sudo make dkms --file=dkms_Makefile KVER=$(uname -r) -C ${TGTD}
