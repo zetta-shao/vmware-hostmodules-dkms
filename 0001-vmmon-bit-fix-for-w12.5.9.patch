@@ -1,0 +1,39 @@
+From ca0b48e644e9f107047a71bd773757fb08cf47e9 Mon Sep 17 00:00:00 2001
+From: zetta shao <zphalanx@gmail.com>
+Date: Thu, 20 Jun 2024 10:17:20 +0800
+Subject: [PATCH] vmmon-bit-fix-for-w12.5.9
+
+---
+ vmmon-only/include/x86cpuid.h | 2 +-
+ vmmon-only/include/x86msr.h   | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/vmmon-only/include/x86cpuid.h b/vmmon-only/include/x86cpuid.h
+index 40d9a5e..f8725b2 100644
+--- a/vmmon-only/include/x86cpuid.h
++++ b/vmmon-only/include/x86cpuid.h
+@@ -82,7 +82,7 @@ struct CPUIDQuery {
+    uint32 eax;                // IN
+    uint32 ecx;                // IN
+    uint32 numLogicalCPUs;     // IN/OUT
+-   CPUIDReply logicalCPUs[0]; // OUT
++   CPUIDReply logicalCPUs[]; // OUT
+ }
+ #include "vmware_pack_end.h"
+ CPUIDQuery;
+diff --git a/vmmon-only/include/x86msr.h b/vmmon-only/include/x86msr.h
+index bb85da7..de9b7bc 100644
+--- a/vmmon-only/include/x86msr.h
++++ b/vmmon-only/include/x86msr.h
+@@ -69,7 +69,7 @@ typedef
+ struct MSRQuery {
+    uint32 msrNum;           // IN
+    uint32 numLogicalCPUs;   // IN/OUT
+-   MSRReply logicalCPUs[0]; // OUT
++   MSRReply logicalCPUs[]; // OUT
+ }
+ #include "vmware_pack_end.h"
+ MSRQuery;
+-- 
+2.43.0
+

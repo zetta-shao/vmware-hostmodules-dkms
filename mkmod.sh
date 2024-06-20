@@ -2,6 +2,7 @@
 TGTD="vmware-host-modules"
 BRANCH="workstation-12.5.9"
 if ! [ -z "${1}" ]; then BRANCH=${1}; fi
+sudo /etc/init.d/vmware stop
 if [ "${1}" = "clean" ]; then
   TGTM=`dkms status vmware-host-modules|awk -F'[,|:]' '{print $1}'`
   if ! [ -z "${TGTM}" ]; then
@@ -19,8 +20,15 @@ git clone https://github.com/mkubecek/vmware-host-modules.git -b ${BRANCH} ${TGT
 cp -f dkms_Makefile ${TGTD}/
 cp -f vmmon_Makefile ${TGTD}/vmmon-only/dkms_Makefile
 cp -f vmnet_Makefile ${TGTD}/vmnet-only/dkms_Makefile
+git config --global --add safe.directory $(pwd)/${TGTD}
 cd ${TGTD}
-git apply ../0001-fix-define.patch
+VER=$(git describe --long --always|awk -F'-' '{print $1}')
+if [ ${VER} = "w17.5.1" ]; then
+	git apply ../0001-vmmon-bit-fix-for-w17.5.1.patch
+elif [ ${VER} = "w12.5.9" ]; then
+	git apply ../0001-vmmon-bit-fix-for-w12.5.9.patch
+fi
 cd ..
 fi
 sudo make dkms --file=dkms_Makefile KVER=$(uname -r) -C ${TGTD}
+sudo /etc/init.d/vmware start
