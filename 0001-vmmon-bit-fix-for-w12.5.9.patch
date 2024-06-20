@@ -1,13 +1,27 @@
-From ca0b48e644e9f107047a71bd773757fb08cf47e9 Mon Sep 17 00:00:00 2001
+From 33e35cb3867c2fa627b63908e77639f8e7e63f92 Mon Sep 17 00:00:00 2001
 From: zetta shao <zphalanx@gmail.com>
-Date: Thu, 20 Jun 2024 10:17:20 +0800
+Date: Thu, 20 Jun 2024 20:18:31 +0800
 Subject: [PATCH] vmmon-bit-fix-for-w12.5.9
 
 ---
- vmmon-only/include/x86cpuid.h | 2 +-
- vmmon-only/include/x86msr.h   | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+ vmmon-only/include/iocontrols.h | 2 +-
+ vmmon-only/include/x86cpuid.h   | 2 +-
+ vmmon-only/include/x86msr.h     | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
 
+diff --git a/vmmon-only/include/iocontrols.h b/vmmon-only/include/iocontrols.h
+index ad82c1a..34741d6 100644
+--- a/vmmon-only/include/iocontrols.h
++++ b/vmmon-only/include/iocontrols.h
+@@ -483,7 +483,7 @@ typedef struct VMMemInfoArgs {
+    uint32          callerIndex;        // this vm's index memInfo array
+    uint32          numVMs;             // number of running VMs
+    uint8           _pad[4];
+-   VMMemMgmtInfo   memInfo[1];
++   VMMemMgmtInfo   memInfo[];
+ } VMMemInfoArgs;
+ 
+ #define VM_GET_MEM_INFO_SIZE(numVMs) \
 diff --git a/vmmon-only/include/x86cpuid.h b/vmmon-only/include/x86cpuid.h
 index 40d9a5e..f8725b2 100644
 --- a/vmmon-only/include/x86cpuid.h
