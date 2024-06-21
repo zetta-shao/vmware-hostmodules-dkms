@@ -4,6 +4,8 @@ SUBDIRS = $(MODULES:%=%-only)
 TARBALLS = $(MODULES:%=%.tar)
 MODFILES = $(foreach mod,$(MODULES),$(mod)-only/$(mod).ko)
 VM_UNAME = $(shell uname -r)
+ALL_UNAME = $(shell ls /lib/modules/)
+DKMS_STA = $(shell dkms status|grep vmware\-host\-modules)
 MODDIR = /lib/modules/$(VM_UNAME)/misc
 MOD_SUBDIR = extra/drivers/net
 MODINFO = /sbin/modinfo
@@ -75,13 +77,17 @@ dkms_configure:
 	@echo "AUTOINSTALL=\"yes\"" >> dkms.conf
 	@echo "$(PACKAGE_VERSION)" >VERSION
 dkms: dkms_configure
-	@dkms add $(CURDIR)
-	@dkms build -m $(DRIVER_NAME) -v $(PACKAGE_VERSION)
-	@dkms install --force -m $(DRIVER_NAME) -v $(PACKAGE_VERSION)
+	if [ x$(DKMS_STA) = 'x' ]; then dkms add $(CURDIR); fi
+	## @dkms build -m $(DRIVER_NAME) -v $(PACKAGE_VERSION)
+	for kr in $(ALL_UNAME); do \
+		dkms build -m $(DRIVER_NAME) -v $(PACKAGE_VERSION) -k $$kr; \
+		dkms install --force -m $(DRIVER_NAME) -v $(PACKAGE_VERSION) -k $$kr; \
+	done
 	@modprobe $(MODULES)
 
 dkms_clean:
 	-@rmmod $(MODULES);
-	-@dkms remove -m $(PACKAGE_NAME) -v $(PACKAGE_VERSION)
+	##-@dkms remove -m $(PACKAGE_NAME) -v $(PACKAGE_VERSION)
+	for kr in $(ALL_UNAME); do dkms remove -m $(PACKAGE_NAME) -v $(PACKAGE_VERSION) -k $$kr; done
 	-@rm dkms.conf VERSION
 
