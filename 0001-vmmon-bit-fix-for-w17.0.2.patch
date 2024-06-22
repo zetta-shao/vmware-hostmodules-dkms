@@ -1,0 +1,39 @@
+From ce09997c9ff12d67264e7ad0a7952bc2fd408b50 Mon Sep 17 00:00:00 2001
+From: zetta shao <zphalanx@gmail.com>
+Date: Sat, 22 Jun 2024 13:13:19 +0800
+Subject: [PATCH] vmmon-bit-fix-for-w17.0.2
+
+---
+ vmmon-only/include/x86cpuid.h | 2 +-
+ vmmon-only/include/x86msr.h   | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/vmmon-only/include/x86cpuid.h b/vmmon-only/include/x86cpuid.h
+index 1fe6fcd..2996ae4 100644
+--- a/vmmon-only/include/x86cpuid.h
++++ b/vmmon-only/include/x86cpuid.h
+@@ -92,7 +92,7 @@ typedef struct CPUIDQuery {
+    uint32 eax;                // IN
+    uint32 ecx;                // IN
+    uint32 numLogicalCPUs;     // IN/OUT
+-   CPUIDReply logicalCPUs[0]; // OUT
++   CPUIDReply logicalCPUs[]; // OUT
+ } CPUIDQuery;
+ #pragma pack(pop)
+ #endif
+diff --git a/vmmon-only/include/x86msr.h b/vmmon-only/include/x86msr.h
+index 189c982..bc0e6ef 100644
+--- a/vmmon-only/include/x86msr.h
++++ b/vmmon-only/include/x86msr.h
+@@ -67,7 +67,7 @@ typedef struct MSRReply {
+ typedef struct MSRQuery {
+    uint32 msrNum;           // IN
+    uint32 numLogicalCPUs;   // IN/OUT
+-   MSRReply logicalCPUs[0]; // OUT
++   MSRReply logicalCPUs[]; // OUT
+ } MSRQuery;
+ #pragma pack(pop)
+ 
+-- 
+2.34.1
+
