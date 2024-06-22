@@ -25,6 +25,7 @@ fi
 cd ${TGTD}
 git reset $(git log|head -1|awk '{print $2}') --hard
 git checkout master
+git pull
 git checkout ${BRANCH}
 VER=$(git describe --long --always|awk -F'-' '{print $1}')
 if [ ${VER} = "w17.5.1" ]; then
