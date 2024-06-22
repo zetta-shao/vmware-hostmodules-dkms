@@ -1,8 +1,13 @@
 #!/bin/bash
 TGTD="vmware-host-modules"
-BRANCH="workstation-17.0.2"
+BRANCH="workstation-12.5.9"
 VMCTL="/etc/init.d/vmware"
 if ! [ -z "${1}" ]; then BRANCH=${1}; fi
+if [ "${1}" = "update" ]; then
+  git reset $(git log|head -1|awk '{print $2}') --hard
+  git pull
+  exit
+fi
 if [ -r ${VMCTL} ]; then sudo ${VMCTL} stop; fi
 if [ "${1}" = "clean" ]; then
   TGTM=`dkms status|grep vmware-host-modules|awk -F'[,|:]' '{print $1}'`
