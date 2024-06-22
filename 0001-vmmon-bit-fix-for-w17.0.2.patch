@@ -1,13 +1,64 @@
-From ce09997c9ff12d67264e7ad0a7952bc2fd408b50 Mon Sep 17 00:00:00 2001
+From aafb12380350d4d08b5cbea3aa5fe19522edc47d Mon Sep 17 00:00:00 2001
 From: zetta shao <zphalanx@gmail.com>
-Date: Sat, 22 Jun 2024 13:13:19 +0800
+Date: Sun, 23 Jun 2024 00:41:46 +0800
 Subject: [PATCH] vmmon-bit-fix-for-w17.0.2
 
 ---
+ vmmon-only/common/task.c      | 2 +-
+ vmmon-only/common/vmx86.c     | 6 +++---
  vmmon-only/include/x86cpuid.h | 2 +-
  vmmon-only/include/x86msr.h   | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+ vmmon-only/linux/driver.c     | 4 ++--
+ vmmon-only/linux/hostif.c     | 6 +++---
+ vmnet-only/bridge.c           | 2 +-
+ vmnet-only/driver.c           | 4 ++--
+ vmnet-only/vnetInt.h          | 7 ++++++-
+ 9 files changed, 20 insertions(+), 15 deletions(-)
 
+diff --git a/vmmon-only/common/task.c b/vmmon-only/common/task.c
+index 5d34cf4..f375206 100644
+--- a/vmmon-only/common/task.c
++++ b/vmmon-only/common/task.c
+@@ -544,7 +544,7 @@ Task_Terminate(void)
+  *-----------------------------------------------------------------------------
+  */
+ 
+-Selector
++static Selector
+ TaskGetFlatWriteableDataSegment(void)
+ {
+    DTR hostGDTR;
+diff --git a/vmmon-only/common/vmx86.c b/vmmon-only/common/vmx86.c
+index 86e52fb..cf64b12 100644
+--- a/vmmon-only/common/vmx86.c
++++ b/vmmon-only/common/vmx86.c
+@@ -49,7 +49,7 @@
+ #include "x86svm.h"
+ #include "x86cpuid_asm.h"
+ #if defined(__linux__)
+-#include <asm/timex.h>
++#include <linux/timex.h>
+ #endif
+ #include "perfctr.h"
+ #include "x86vtinstr.h"
+@@ -696,7 +696,7 @@ Vmx86FreeCrossPages(VMDriver *vm)
+  *-----------------------------------------------------------------------------
+  */
+ 
+-void
++static void
+ Vmx86FreeVMDriver(VMDriver *vm)
+ {
+    Vmx86_Free(vm->ptRootMpns);
+@@ -729,7 +729,7 @@ Vmx86FreeVMDriver(VMDriver *vm)
+  *-----------------------------------------------------------------------------
+  */
+ 
+-VMDriver *
++static VMDriver *
+ Vmx86AllocVMDriver(uint32 numVCPUs)
+ {
+    VMDriver *vm = Vmx86_Calloc(1, sizeof *vm, TRUE);
 diff --git a/vmmon-only/include/x86cpuid.h b/vmmon-only/include/x86cpuid.h
 index 1fe6fcd..2996ae4 100644
 --- a/vmmon-only/include/x86cpuid.h
@@ -34,6 +85,112 @@ index 189c982..bc0e6ef 100644
  } MSRQuery;
  #pragma pack(pop)
  
+diff --git a/vmmon-only/linux/driver.c b/vmmon-only/linux/driver.c
+index 3d8b722..ab8e2dc 100644
+--- a/vmmon-only/linux/driver.c
++++ b/vmmon-only/linux/driver.c
+@@ -267,7 +267,7 @@ LinuxDriverInitTSCkHz(void)
+  *----------------------------------------------------------------------
+  */
+ 
+-int
++static int
+ LinuxDriverInit(void)
+ {
+    int retval;
+@@ -335,7 +335,7 @@ LinuxDriverInit(void)
+  *----------------------------------------------------------------------
+  */
+ 
+-void
++static void
+ LinuxDriverExit(void)
+ {
+    /*
+diff --git a/vmmon-only/linux/hostif.c b/vmmon-only/linux/hostif.c
+index b9e3d30..4ed1d5a 100644
+--- a/vmmon-only/linux/hostif.c
++++ b/vmmon-only/linux/hostif.c
+@@ -2922,7 +2922,7 @@ HostIF_CallOnEachCPU(void (*func)(void*), // IN: function to call
+  *-----------------------------------------------------------------------------
+  */
+ 
+-Bool
++static Bool
+ HostIFCheckTrackedMPN(VMDriver *vm, // IN: The VM instance
+                       MPN mpn)      // IN: The MPN
+ {
+@@ -3042,7 +3042,7 @@ HostIF_ReadPhysical(VMDriver *vm,      // IN: The VM instance
+  *----------------------------------------------------------------------
+  */
+ 
+-int
++static int
+ HostIFWritePhysicalWork(MA ma,             // MA to be written to
+                         VA64 addr,         // src data to write
+                         Bool kernelBuffer, // is the buffer in kernel space?
+@@ -3201,7 +3201,7 @@ HostIF_GetCurrentPCPU(void)
+  *----------------------------------------------------------------------
+  */
+ 
+-int
++static int
+ HostIFStartTimer(Bool rateChanged,  //IN: Did rate change?
+                  unsigned int rate) //IN: current clock rate
+ {
+diff --git a/vmnet-only/bridge.c b/vmnet-only/bridge.c
+index bc4727c..be8140e 100644
+--- a/vmnet-only/bridge.c
++++ b/vmnet-only/bridge.c
+@@ -1411,7 +1411,7 @@ VNetBridgeComputeHeaderPos(struct sk_buff *skb) // IN: buffer to examine
+  *----------------------------------------------------------------------
+  */
+ 
+-void
++static void
+ VNetBridgeSendLargePacket(struct sk_buff *skb,        // IN: packet to split
+                           VNetBridge *bridge)         // IN: bridge
+ {
+diff --git a/vmnet-only/driver.c b/vmnet-only/driver.c
+index f314ff2..4cf1335 100644
+--- a/vmnet-only/driver.c
++++ b/vmnet-only/driver.c
+@@ -296,7 +296,7 @@ VNetRemovePortFromList(const VNetPort *port) // IN: port to remove from list
+  */
+ 
+ int
+-vmnet_init_module(void)
++static vmnet_init_module(void)
+ {
+    int retval;
+ 
+@@ -374,7 +374,7 @@ err_proto:
+  *----------------------------------------------------------------------
+  */
+ 
+-void
++static void
+ vmnet_cleanup_module(void)
+ {
+    unregister_chrdev(VNET_MAJOR_NUMBER, "vmnet");
+diff --git a/vmnet-only/vnetInt.h b/vmnet-only/vnetInt.h
+index f6a90a1..c9e8953 100644
+--- a/vmnet-only/vnetInt.h
++++ b/vmnet-only/vnetInt.h
+@@ -218,7 +218,12 @@ extern int VNetProc_Init(void);
+ 
+ extern void VNetProc_Cleanup(void);
+ 
+-
++// int VNetNetIf_Create(char *devName, VNetPort **ret, int hubNum);
++// int VNetUserIf_Create(VNetPort **ret);
++// int VNetBridge_Create(const char *devName, uint32 flags, VNetJack *hubJack,
++// 		      VNetPort **ret);
++// int VNetUserListener_Create(uint32 classMask, VNetJack *hubJack,
++//			    VNetPort **port);
+ /*
+  *----------------------------------------------------------------------
+  *
 -- 
-2.34.1
+2.43.0
 
