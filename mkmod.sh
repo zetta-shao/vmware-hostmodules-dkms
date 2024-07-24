@@ -1,6 +1,6 @@
 #!/bin/bash
 TGTD="vmware-host-modules"
-BRANCH="workstation-12.5.9"
+BRANCH="workstation-17.0.2"
 VMCTL="/etc/init.d/vmware"
 if ! [ -z "${1}" ]; then BRANCH=${1}; fi
 if [ "${1}" = "update" ]; then

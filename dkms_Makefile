@@ -4,7 +4,7 @@ SUBDIRS = $(MODULES:%=%-only)
 TARBALLS = $(MODULES:%=%.tar)
 MODFILES = $(foreach mod,$(MODULES),$(mod)-only/$(mod).ko)
 VM_UNAME = $(shell uname -r)
-ALL_UNAME = $(shell ls /lib/modules/)
+ALL_UNAME = $(shell ls /boot/config-*|sed 's/\/boot\/config\-//g')
 DKMS_STA = $(shell dkms status|grep vmware\-host\-modules)
 MODDIR = /lib/modules/$(VM_UNAME)/misc
 MOD_SUBDIR = extra/drivers/net
