@@ -1,6 +1,7 @@
 #!/bin/bash
 TGTD="vmware-host-modules"
-BRANCH="workstation-17.0.2"
+#BRANCH="workstation-12.5.9"
+BRANCH="workstation-17.5.2-k6.9+"
 VMCTL="/etc/init.d/vmware"
 if ! [ -z "${1}" ]; then BRANCH=${1}; fi
 if [ "${1}" = "update" ]; then
@@ -24,7 +25,8 @@ if [ "${1}" = "clean" ]; then
     exit; fi; exit; fi
 echo "branch is: "${BRANCH}
 if ! [ -d "${TGTD}" ]; then
-  git clone https://github.com/mkubecek/vmware-host-modules.git -b ${BRANCH} ${TGTD}
+  #git clone https://github.com/mkubecek/vmware-host-modules.git -b ${BRANCH} ${TGTD}
+  git clone https://github.com/nan0desu/vmware-host-modules.git -b ${BRANCH} ${TGTD}
   git config --global --add safe.directory $(pwd)/${TGTD}
 fi
 cd ${TGTD}
