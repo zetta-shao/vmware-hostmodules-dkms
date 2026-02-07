@@ -1,20 +1,15 @@
-From aafb12380350d4d08b5cbea3aa5fe19522edc47d Mon Sep 17 00:00:00 2001
-From: zetta shao <zphalanx@gmail.com>
-Date: Sun, 23 Jun 2024 00:41:46 +0800
-Subject: [PATCH] vmmon-bit-fix-for-w17.0.2
-
----
- vmmon-only/common/task.c      | 2 +-
- vmmon-only/common/vmx86.c     | 6 +++---
- vmmon-only/include/x86cpuid.h | 2 +-
- vmmon-only/include/x86msr.h   | 2 +-
- vmmon-only/linux/driver.c     | 4 ++--
- vmmon-only/linux/hostif.c     | 6 +++---
- vmnet-only/bridge.c           | 2 +-
- vmnet-only/driver.c           | 4 ++--
- vmnet-only/vnetInt.h          | 7 ++++++-
- 9 files changed, 20 insertions(+), 15 deletions(-)
-
+diff --git a/vmmon-only/Makefile.kernel b/vmmon-only/Makefile.kernel
+index a39e099..0bbf1ca 100644
+--- a/vmmon-only/Makefile.kernel
++++ b/vmmon-only/Makefile.kernel
+@@ -21,6 +21,7 @@ CC_OPTS += -DVMMON -DVMCORE
+ 
+ INCLUDE := -I$(SRCROOT)/include -I$(SRCROOT)/include/x86 -I$(SRCROOT)/common -I$(SRCROOT)/linux
+ EXTRA_CFLAGS := $(CC_OPTS) $(INCLUDE)
++ccflags-y := $(CC_OPTS) $(INCLUDE)
+ 
+ obj-m += $(DRIVER).o
+ 
 diff --git a/vmmon-only/common/task.c b/vmmon-only/common/task.c
 index 5d34cf4..f375206 100644
 --- a/vmmon-only/common/task.c
@@ -86,7 +81,7 @@ index 189c982..bc0e6ef 100644
  #pragma pack(pop)
  
 diff --git a/vmmon-only/linux/driver.c b/vmmon-only/linux/driver.c
-index 3d8b722..ab8e2dc 100644
+index 3d8b722..6aaacd9 100644
 --- a/vmmon-only/linux/driver.c
 +++ b/vmmon-only/linux/driver.c
 @@ -267,7 +267,7 @@ LinuxDriverInitTSCkHz(void)
@@ -107,11 +102,36 @@ index 3d8b722..ab8e2dc 100644
  LinuxDriverExit(void)
  {
     /*
+@@ -344,8 +344,11 @@ LinuxDriverExit(void)
+    misc_deregister(&vmmon_miscdev);
+ 
+    Log("Module %s: unloaded\n", vmmon_miscdev.name);
+-
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 15, 0)
+    del_timer_sync(&tscTimer);
++#else
++   timer_delete_sync(&tscTimer);
++#endif
+ 
+    Vmx86_CleanupHVIOBitmap();
+    Task_Terminate();
 diff --git a/vmmon-only/linux/hostif.c b/vmmon-only/linux/hostif.c
-index b9e3d30..4ed1d5a 100644
+index b9e3d30..2c49ec0 100644
 --- a/vmmon-only/linux/hostif.c
 +++ b/vmmon-only/linux/hostif.c
-@@ -2922,7 +2922,7 @@ HostIF_CallOnEachCPU(void (*func)(void*), // IN: function to call
+@@ -1995,7 +1995,11 @@ HostIF_InitUptime(void)
+ void
+ HostIF_CleanupUptime(void)
+ {
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 15, 0)
+    del_timer_sync(&uptimeState.timer);
++#else
++   timer_delete_sync(&uptimeState.timer);
++#endif
+ }
+ 
+ 
+@@ -2922,7 +2926,7 @@ HostIF_CallOnEachCPU(void (*func)(void*), // IN: function to call
   *-----------------------------------------------------------------------------
   */
  
@@ -120,7 +140,7 @@ index b9e3d30..4ed1d5a 100644
  HostIFCheckTrackedMPN(VMDriver *vm, // IN: The VM instance
                        MPN mpn)      // IN: The MPN
  {
-@@ -3042,7 +3042,7 @@ HostIF_ReadPhysical(VMDriver *vm,      // IN: The VM instance
+@@ -3042,7 +3046,7 @@ HostIF_ReadPhysical(VMDriver *vm,      // IN: The VM instance
   *----------------------------------------------------------------------
   */
  
@@ -129,7 +149,7 @@ index b9e3d30..4ed1d5a 100644
  HostIFWritePhysicalWork(MA ma,             // MA to be written to
                          VA64 addr,         // src data to write
                          Bool kernelBuffer, // is the buffer in kernel space?
-@@ -3201,7 +3201,7 @@ HostIF_GetCurrentPCPU(void)
+@@ -3201,7 +3205,7 @@ HostIF_GetCurrentPCPU(void)
   *----------------------------------------------------------------------
   */
  
@@ -138,6 +158,19 @@ index b9e3d30..4ed1d5a 100644
  HostIFStartTimer(Bool rateChanged,  //IN: Did rate change?
                   unsigned int rate) //IN: current clock rate
  {
+@@ -3408,8 +3412,11 @@ HostIF_SafeRDMSR(unsigned int msr,   // IN
+ {
+    int err;
+    u64 v;
+-
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 16, 0)
+    err = rdmsrl_safe(msr, &v);
++#else
++   err = rdmsrq_safe(msr, &v);
++#endif
+    *val = (err == 0) ? v : 0;  // Linux corrupts 'v' on error
+ 
+    return err;
 diff --git a/vmnet-only/bridge.c b/vmnet-only/bridge.c
 index bc4727c..be8140e 100644
 --- a/vmnet-only/bridge.c
@@ -173,6 +206,25 @@ index f314ff2..4cf1335 100644
  vmnet_cleanup_module(void)
  {
     unregister_chrdev(VNET_MAJOR_NUMBER, "vmnet");
+diff --git a/vmnet-only/vmnetInt.h b/vmnet-only/vmnetInt.h
+index b49c399..f1d8e9e 100644
+--- a/vmnet-only/vmnetInt.h
++++ b/vmnet-only/vmnetInt.h
+@@ -41,9 +41,13 @@
+     compat_skb_set_network_header(skb, sizeof (struct ethhdr)),  \
+     dev_queue_xmit(skb)                                   \
+   )
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 14, 0)
+ #define dev_lock_list()    read_lock(&dev_base_lock)
+ #define dev_unlock_list()  read_unlock(&dev_base_lock)
+-
++#else
++#define dev_lock_list()    rcu_read_lock()
++#define dev_unlock_list()  rcu_read_unlock()
++#endif
+ 
+ extern struct proto vmnet_proto;
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0) || defined(sk_net_refcnt)
 diff --git a/vmnet-only/vnetInt.h b/vmnet-only/vnetInt.h
 index f6a90a1..c9e8953 100644
 --- a/vmnet-only/vnetInt.h
@@ -191,6 +243,3 @@ index f6a90a1..c9e8953 100644
  /*
   *----------------------------------------------------------------------
   *
--- 
-2.43.0
-
